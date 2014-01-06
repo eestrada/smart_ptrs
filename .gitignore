@@ -1,3 +1,8 @@
+# Binary executable files
+*.bin
+*.app
+*.exe
+
 # Compiled Object files
 *.slo
 *.lo
