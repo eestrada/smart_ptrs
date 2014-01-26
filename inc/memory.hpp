@@ -44,6 +44,9 @@ public:
 namespace safe
 {
 
+/*
+ * unique_ptr class interface
+ */
 template < typename T, typename D = std::default_delete<T> >
 class unique_ptr
 {
@@ -56,7 +59,7 @@ public:
     /*
      * Constructors
      */
-    constexpr unique_ptr() noexcept;
+    constexpr unique_ptr(void) noexcept : ptr(), deleter() {}
     constexpr unique_ptr (std::nullptr_t) noexcept : unique_ptr() {}
     explicit unique_ptr (pointer p) noexcept;
     unique_ptr (pointer p,
@@ -73,6 +76,11 @@ public:
     unique_ptr (const unique_ptr&) = delete;
 
     /*
+     * Destructor
+     */
+    ~unique_ptr(void) noexcept;
+
+    /*
      * Assignment operators
      */
     unique_ptr& operator=(unique_ptr&& x) noexcept;
@@ -86,14 +94,102 @@ public:
      */
     unique_ptr& operator=(const unique_ptr&) = delete;
 
+    /*
+     * Member functions.
+     */
+
+    pointer get(void) const noexcept;
+    deleter_type get_deleter(void) const noexcept;
+    explicit operator bool() const noexcept;
+    pointer release() noexcept;
+    void reset(pointer p = pointer()) noexcept;
+    void swap(unique_ptr& other) noexcept;
+    element_type& operator*() const; // This CAN throw exceptions
+    pointer operator->() const; // This CAN throw exceptions
+
 private:
     pointer ptr;
     deleter_type deleter;
 };
 
+/*
+ * shared_ptr class interface
+ */
 class shared_ptr
 {
 };
+
+/*
+ * unique_ptr class implementation
+ */
+template < typename T, typename D >
+unique_ptr<T, D>::unique_ptr(unique_ptr::pointer p) noexcept : ptr(p) {}
+
+template < typename T, typename D >
+unique_ptr<T, D>::~unique_ptr(void) noexcept
+{
+    this->reset();
+}
+
+template < typename T, typename D >
+typename unique_ptr<T, D>::pointer unique_ptr<T, D>::release() noexcept
+{
+    pointer p = this->ptr;
+    this->ptr = nullptr;
+    return p;
+}
+
+template < typename T, typename D >
+void unique_ptr<T, D>::reset(unique_ptr::pointer p) noexcept
+{
+    deleter(this->ptr);
+    this->ptr = p;
+}
+
+template < typename T, typename D >
+void unique_ptr<T, D>::swap(unique_ptr& other) noexcept
+{
+    deleter_type d = other.deleter;
+    pointer p = other.ptr;
+
+    other.deleter = this->deleter;
+    other.ptr = this->ptr;
+
+    this->deleter = d;
+    this->ptr = p;
+}
+
+template < typename T, typename D >
+typename unique_ptr<T, D>::deleter_type unique_ptr<T, D>::get_deleter(void) const noexcept
+{
+    return deleter;
+}
+
+template < typename T, typename D >
+typename unique_ptr<T, D>::pointer unique_ptr<T, D>::get(void) const noexcept
+{
+    return ptr;
+}
+
+template < typename T, typename D >
+unique_ptr<T, D>::operator bool(void) const noexcept
+{
+    return this->get() != nullptr;
+}
+
+template < typename T, typename D >
+typename unique_ptr<T, D>::element_type& unique_ptr<T, D>::operator*() const // This CAN throw exceptions
+{
+    if (this->ptr == nullptr) throw ptr_error("Null pointer cannot be dereferenced.");
+    else return *ptr;
+}
+
+template < typename T, typename D >
+typename unique_ptr<T, D>::pointer unique_ptr<T, D>::operator->() const // This CAN throw exceptions
+{
+    if (this->ptr == nullptr) throw ptr_error("Null pointer cannot be dereferenced.");
+    else return ptr;
+}
 
 } // End namespace safe
 
