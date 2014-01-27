@@ -5,10 +5,13 @@
 #include <stdexcept>
 #include <string>
 #include <memory>
+#include <functional>
+#include <unordered_set>
 #include <type_traits>
 
 /* C headers */
 #include <cstddef>
+#include <cstdint>
 
 namespace ptr
 {
@@ -43,6 +46,8 @@ public:
  */
 namespace safe
 {
+
+static std::unordered_set<size_t> ptr_set;
 
 /*
  * unique_ptr class interface
@@ -194,4 +199,75 @@ typename unique_ptr<T, D>::pointer unique_ptr<T, D>::operator->() const // This 
 } // End namespace safe
 
 } // End namespace ptr
+
+/*
+ * unique_ptr class relational operators
+ */
+
+template < typename SP, typename T1, typename D1, typename T2, typename D2>
+bool operator == (const ptr::safe::unique_ptr<T1, D1>& lhs, const ptr::safe::unique_ptr<T2, D2>& rhs) noexcept
+{
+    return uintptr_t(lhs.get()) == uintptr_t(rhs.get());
+}
+
+template < typename T, typename D >
+bool operator == (const ptr::safe::unique_ptr<T, D>& lhs, std::nullptr_t) noexcept
+{
+    return uintptr_t(lhs.get()) == uintptr_t(nullptr);
+}
+
+template < typename T, typename D >
+bool operator == (std::nullptr_t, const ptr::safe::unique_ptr<T, D>& rhs) noexcept
+{
+    return rhs == nullptr;
+}
+
+template < typename T1, typename D1, typename T2, typename D2>
+bool operator < (const ptr::safe::unique_ptr<T1, D1>& lhs, const ptr::safe::unique_ptr<T2, D2>& rhs) noexcept
+{
+    return uintptr_t(lhs.get()) < uintptr_t(rhs.get());
+}
+
+template < typename T, typename D >
+bool operator < (const ptr::safe::unique_ptr<T, D>& lhs, std::nullptr_t) noexcept
+{
+    return uintptr_t(lhs.get()) < uintptr_t(nullptr);
+}
+
+template < typename T, typename D >
+bool operator < (std::nullptr_t, const ptr::safe::unique_ptr<T, D>& rhs) noexcept
+{
+    return uintptr_t(nullptr) < uintptr_t(rhs.get());
+}
+
+/*
+ * General relational ops
+ * These should work for almost any two types that have == and < defined for them.
+ */
+
+template < typename T, typename U >
+bool operator != (const T& lhs, const U& rhs) noexcept
+{
+    return !(lhs == rhs);
+}
+
+template < typename T, typename U >
+bool operator > (const T& lhs, const T& rhs) noexcept
+{
+    return rhs < lhs;
+}
+
+template < typename T, typename U >
+bool operator <= (const T& lhs, const T& rhs) noexcept
+{
+    return !(rhs < lhs);
+}
+
+template < typename T, typename U >
+bool operator >= (const T& lhs, const T& rhs) noexcept
+{
+    return !(lhs < rhs);
+}
+
 #endif /* End include guard */
+
