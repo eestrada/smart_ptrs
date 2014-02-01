@@ -117,11 +117,130 @@ private:
     deleter_type deleter;
 };
 
+struct ptr_counter
+{
+    uintptr_t ptr;
+    size_t shared_counter;
+    size_t weak_counter;
+};
+
 /*
  * shared_ptr class interface
  */
+template < typename T, typename D = std::default_delete<T> >
 class shared_ptr
 {
+public: // Member types
+    typedef T element_type;
+    typedef D deleter_type;
+    typedef T* pointer;
+
+public:
+    /*
+     * Constructors
+     */
+    constexpr shared_ptr(void) noexcept : ptr(), deleter() {}
+    constexpr shared_ptr (std::nullptr_t) noexcept : shared_ptr() {}
+    explicit shared_ptr (pointer p) noexcept;
+    shared_ptr (pointer p,
+        typename std::conditional<std::is_reference<D>::value,D,
+        const D&> del) noexcept;
+    shared_ptr (pointer p,
+        typename std::remove_reference<D>::type&& del) noexcept;
+    shared_ptr (shared_ptr&& x) noexcept;
+    template <class U, class E>
+      shared_ptr (shared_ptr<U,E>&& x) noexcept;
+    /*
+     * Never copy! Only move.
+     */
+    shared_ptr (const shared_ptr&) = delete;
+
+    /*
+     * Destructor
+     */
+    ~shared_ptr(void) noexcept;
+
+    /*
+     * Assignment operators
+     */
+    shared_ptr& operator=(shared_ptr&& x) noexcept;
+    shared_ptr& operator=(std::nullptr_t) noexcept;
+
+    template < typename U, typename E >
+    shared_ptr& operator=(shared_ptr<U, E>&& x) noexcept;
+
+
+    /*
+     * Member functions.
+     */
+
+    pointer get(void) const noexcept;
+    deleter_type get_deleter(void) const noexcept;
+    explicit operator bool() const noexcept;
+    pointer release() noexcept;
+    void reset(pointer p = pointer()) noexcept;
+    void swap(shared_ptr& other) noexcept;
+    element_type& operator*() const; // This CAN throw exceptions
+    pointer operator->() const; // This CAN throw exceptions
+
+protected:
+    ptr_counter *ptr;
+    deleter_type deleter;
+};
+
+/*
+ * weak_ptr class interface
+ */
+template < typename T >
+class weak_ptr
+{
+public: // Member types
+    typedef T element_type;
+    typedef T* pointer;
+public:
+    /*
+     * Constructors
+     */
+    constexpr weak_ptr(void) noexcept : ptr() {}
+    constexpr weak_ptr (std::nullptr_t) noexcept : weak_ptr() {}
+    explicit weak_ptr (pointer p) noexcept;
+    weak_ptr (weak_ptr&& x) noexcept;
+    template <class U>
+      weak_ptr (weak_ptr<U>&& x) noexcept;
+    /*
+     * Never copy! Only move.
+     */
+    weak_ptr (const weak_ptr&) = delete;
+
+    /*
+     * Destructor
+     */
+    ~weak_ptr(void) noexcept;
+
+    /*
+     * Assignment operators
+     */
+    weak_ptr& operator=(weak_ptr&& x) noexcept;
+    weak_ptr& operator=(std::nullptr_t) noexcept;
+
+    template < typename U >
+    weak_ptr& operator=(weak_ptr<U>&& x) noexcept;
+
+
+    /*
+     * Member functions.
+     */
+
+    pointer get(void) const noexcept;
+    explicit operator bool() const noexcept;
+    pointer release() noexcept;
+    void reset(pointer p = pointer()) noexcept;
+    void swap(weak_ptr& other) noexcept;
+    element_type& operator*() const; // This CAN throw exceptions
+    pointer operator->() const; // This CAN throw exceptions
+
+protected:
+    ptr_counter *ptr;
 };
 
 /*
