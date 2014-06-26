@@ -2,6 +2,7 @@
 #include <memory>
 #include <csignal>
 #include "memory.hpp"
+#include "cow.hpp"
 
 extern "C" void segv_handler(int parm)
 {
@@ -13,7 +14,7 @@ extern "C" void segv_handler(int parm)
 
 using ptr::safe::unique_ptr;
 
-int main(void)
+int test(void)
 {
     std::signal(SIGSEGV, segv_handler);
     std::signal(SIGILL, segv_handler);
@@ -59,5 +60,40 @@ int main(void)
     std::cerr << "dereferenced q creates a segmentation fault: " << *q << std::endl;
 
 
+    return 0;
+}
+
+
+int main(void)
+{
+    using namespace std;
+
+    ptr::cow_ptr<int> p(new int(123));
+    std::shared_ptr<int> q(new int(456));
+
+    std::cerr << "p is a ptr::cow_ptr" << std::endl;
+    std::cerr << "q is a std::shared_ptr" << std::endl;
+
+    std::cerr << "p equals: " << p.get() << std::endl;
+    std::cerr << "q equals: " << q.get() << std::endl;
+    std::cerr << "p's truth value is: " << std::boolalpha << bool(p) << std::endl;
+    std::cerr << "q's truth value is: " << std::boolalpha << bool(q) << std::endl;
+    std::cerr << "dereferenced p equals: " << *p << std::endl;
+    std::cerr << "dereferenced q equals: " << *q << std::endl;
+
+    p.reset(new int(789));
+    std::cerr << "p equals: " << p.get() << std::endl;
+    std::cerr << "q equals: " << q.get() << std::endl;
+    std::cerr << "p's truth value is: " << std::boolalpha << bool(p) << std::endl;
+    std::cerr << "q's truth value is: " << std::boolalpha << bool(q) << std::endl;
+    std::cerr << "dereferenced p equals: " << *p << std::endl;
+    std::cerr << "dereferenced q equals: " << *q << std::endl;
+
+    p.reset();
+    q.reset();
+    std::cerr << "p equals: " << p.get() << std::endl;
+    std::cerr << "q equals: " << q.get() << std::endl;
+    std::cerr << "p's truth value is: " << std::boolalpha << bool(p) << std::endl;
+    std::cerr << "q's truth value is: " << std::boolalpha << bool(q) << std::endl;
     return 0;
 }
