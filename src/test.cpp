@@ -12,6 +12,7 @@ extern "C" void segv_handler(int parm)
     std::exit(1);
 }
 
+/*
 using ptr::safe::unique_ptr;
 
 int test(void)
@@ -64,7 +65,7 @@ int test(void)
 }
 
 
-int main(void)
+int test2(void)
 {
     using namespace std;
 
@@ -95,5 +96,25 @@ int main(void)
     std::cerr << "q equals: " << q.get() << std::endl;
     std::cerr << "p's truth value is: " << std::boolalpha << bool(p) << std::endl;
     std::cerr << "q's truth value is: " << std::boolalpha << bool(q) << std::endl;
+    return 0;
+}
+*/
+
+int main(void)
+{
+    using namespace std;
+
+    ptr::cow_ptr<int> p(new int(123));
+    std::shared_ptr<int> q(new int(456));
+
+    std::cerr << "p is a ptr::cow_ptr" << std::endl;
+    std::cerr << "q is a std::shared_ptr" << std::endl;
+
+    std::cerr << "dereferencing p to read from it" << std::endl;
+    int test = p.get_ref();
+
+    std::cerr << "dereferencing p to assign to it" << std::endl;
+    *p = 987;
+
     return 0;
 }
