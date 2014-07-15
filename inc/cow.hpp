@@ -40,6 +40,22 @@ public:
     template <typename U>
     explicit cow_ptr(U *p) : sh_ptr(p) {}
 
+    cow_ptr(const cow_ptr &other) = default;
+
+    cow_ptr(cow_ptr &&other) = default;
+
+    cow_ptr(const std::shared_ptr<T> &other) : sh_ptr(other) {}
+
+    cow_ptr(std::shared_ptr<T> &&other) : sh_ptr(other) {}
+
+    cow_ptr& operator=(const cow_ptr &other) = default;
+
+    cow_ptr& operator=(cow_ptr &&other) = default;
+
+    cow_ptr& operator=(const std::shared_ptr<T> &other) { this->sh_ptr = other; }
+
+    cow_ptr& operator=(std::shared_ptr<T> &&other) { this->sh_ptr = other; }
+
     T* get() const { return this->sh_ptr.get(); }
 
     void reset() { this->sh_ptr.reset(); }
@@ -53,15 +69,9 @@ public:
     template <typename U, typename D, typename Alloc>
     void reset(U *p, D del, Alloc alloc) { this->sh_ptr.reset(p, del, alloc); }
 
-    T& operator*()
-    {
-        return this->set_ref();
-    }
+    T& operator*() { return this->set_ref(); }
 
-    T* operator->()
-    {
-        return &(this->set_ref());
-    }
+    T* operator->() { return &(this->set_ref()); }
 
     /*
      * If the useage count of the object is greater than 1, cow_ptr will
@@ -90,6 +100,12 @@ public:
         if(this->sh_ptr) return *(this->sh_ptr);
         else throw std::runtime_error("Can't derefence null pointer");
     }
+
+    T* set_ptr() { return &(this->set_ref()); }
+
+    const T* get_ptr() const { return &(this->get_ref()); }
+
+    std::shared_ptr<T> get_shared_ptr() const { return this->sh_ptr; }
 
     explicit operator bool() const noexcept
     {
